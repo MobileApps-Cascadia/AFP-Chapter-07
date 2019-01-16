@@ -2,7 +2,11 @@
 // Displays a 16-dayOfWeek weather forecast for the specified city
 package com.deitel.weatherviewer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -13,6 +17,10 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,11 +39,19 @@ public class MainActivity extends AppCompatActivity {
    // List of Weather objects representing the forecast
    private List<Weather> weatherList = new ArrayList<>();
 
+  private FusedLocationProviderClient mFusedLocationClient;
+
+   public EditText locationEditText =
+           (EditText) findViewById(R.id.locationEditText);
+
+  private Geocoder FindEm;
+
    // ArrayAdapter for binding Weather objects to a ListView
    private WeatherArrayAdapter weatherArrayAdapter;
    private ListView weatherListView; // displays weather info
 
    // configure Toolbar, ListView and FAB
+   @SuppressLint("MissingPermission")
    @Override
    protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
@@ -49,15 +65,41 @@ public class MainActivity extends AppCompatActivity {
       weatherArrayAdapter = new WeatherArrayAdapter(this, weatherList);
       weatherListView.setAdapter(weatherArrayAdapter);
 
-      // configure FAB to hide keyboard and initiate web service request
+     mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+      mFusedLocationClient.getLastLocation()
+              .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                 @Override
+                 public void onSuccess(Location location) {
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                       // Logic to handle location object
+
+                       try {
+                        FindEm.getFromLocation(location.getLatitude(),location.getLongitude(),1);
+
+                     locationEditText.setText(FindEm.toString());
+
+
+
+                       } catch (IOException e) {
+                          e.printStackTrace();
+                       }
+
+
+                    }
+                 }
+              });
+
+       // configure FAB to hide keyboard and initiate web service request
       FloatingActionButton fab =
          (FloatingActionButton) findViewById(R.id.fab);
       fab.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View view) {
             // get text from locationEditText and create web service URL
-            EditText locationEditText =
-               (EditText) findViewById(R.id.locationEditText);
+
+
             URL url = createURL(locationEditText.getText().toString());
 
             // hide keyboard and initiate a GetWeatherTask to download

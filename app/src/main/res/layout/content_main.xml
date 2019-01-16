@@ -25,7 +25,8 @@
          android:layout_height="wrap_content"
          android:hint="@string/hint_text"
          android:id="@+id/locationEditText"
-         android:singleLine="true"/>
+         android:singleLine="true"
+          android:text="Stuff"/>
 
    </android.support.design.widget.TextInputLayout>
 
