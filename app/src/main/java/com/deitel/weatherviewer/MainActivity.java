@@ -2,17 +2,27 @@
 // Displays a 16-dayOfWeek weather forecast for the specified city
 package com.deitel.weatherviewer;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,13 +38,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQUEST_LOCATION = 1001 ;
+    //FusedLocationProviderClient instance
+   private FusedLocationProviderClient mFusedLocationClient;
+   private Location lastLocation;
+
    // List of Weather objects representing the forecast
    private List<Weather> weatherList = new ArrayList<>();
 
    // ArrayAdapter for binding Weather objects to a ListView
    private WeatherArrayAdapter weatherArrayAdapter;
    private ListView weatherListView; // displays weather info
-
+private EditText locationEditText;
    // configure Toolbar, ListView and FAB
    @Override
    protected void onCreate(Bundle savedInstanceState) {
@@ -48,16 +64,75 @@ public class MainActivity extends AppCompatActivity {
       weatherListView = (ListView) findViewById(R.id.weatherListView);
       weatherArrayAdapter = new WeatherArrayAdapter(this, weatherList);
       weatherListView.setAdapter(weatherArrayAdapter);
+      locationEditText =
+              (EditText) findViewById(R.id.locationEditText);
+
+      mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+//if request denied, ask for user permission
+      if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+              != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+         // TODO: Consider calling
+         //    ActivityCompat#requestPermissions
+          ActivityCompat.requestPermissions(this, new String[]
+                          {Manifest.permission.ACCESS_FINE_LOCATION},
+                  REQUEST_LOCATION);
+         // here to request the missing permissions, and then overriding
+         //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+         //                                          int[] grantResults)
+         // to handle the case where the user grants the permission. See the documentation
+         // for ActivityCompat#requestPermissions for more details.
+
+         return;
+      }
+      //gets the last location from the FrusedLocation then
+      //gets the latitude and longitude
+      //then makes a list of Addresses to put the last known address in from
+      //geocoder
+      mFusedLocationClient.getLastLocation()
+              .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                 @Override
+                 public void onSuccess(Location location) {
+                    // Got last known location. In some rare situations this can be null.
+                    if (location != null) {
+                       // Logic to handle location object
+                       lastLocation = location;
+                      // String lastL = lastLocation.toString();
+
+                      //locationEditText.setText(lastL);
+                       double latitude = lastLocation.getLatitude();
+                       double longitude = lastLocation.getLongitude();
+                       List<Address> addressList = null;
+                       Geocoder myGeocoder = new Geocoder(MainActivity.this);
+                       //returns an List<Addresses>
+                       try {
+                          addressList =  myGeocoder.getFromLocation(latitude,longitude,1);
+                          Address lastAdress = addressList.get(0);
+
+                         // locationEditText.setText(lastAdress.toString());
+                          String address = lastAdress.getLocality() + ", " + lastAdress.getPostalCode()
+                          + ", " + lastAdress.getCountryName();
+
+                          locationEditText.setText(address);
+
+                       } catch (IOException e) {
+                          e.printStackTrace();
+                       }
+
+
+                    }
+                 }
+              });
 
       // configure FAB to hide keyboard and initiate web service request
       FloatingActionButton fab =
-         (FloatingActionButton) findViewById(R.id.fab);
+              (FloatingActionButton) findViewById(R.id.fab);
       fab.setOnClickListener(new View.OnClickListener() {
          @Override
          public void onClick(View view) {
             // get text from locationEditText and create web service URL
             EditText locationEditText =
-               (EditText) findViewById(R.id.locationEditText);
+                    (EditText) findViewById(R.id.locationEditText);
             URL url = createURL(locationEditText.getText().toString());
 
             // hide keyboard and initiate a GetWeatherTask to download
@@ -66,12 +141,12 @@ public class MainActivity extends AppCompatActivity {
                dismissKeyboard(locationEditText);
                GetWeatherTask getLocalWeatherTask = new GetWeatherTask();
                getLocalWeatherTask.execute(url);
-            }
-            else {
+            } else {
                Snackbar.make(findViewById(R.id.coordinatorLayout),
-                  R.string.invalid_url, Snackbar.LENGTH_LONG).show();
+                       R.string.invalid_url, Snackbar.LENGTH_LONG).show();
             }
          }
+
       });
    }
 

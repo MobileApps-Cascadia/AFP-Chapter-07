@@ -4,6 +4,10 @@
 
    <!-- required to use the Internet -->
    <uses-permission android:name="android.permission.INTERNET" />
+   <!--permission get to location with accuracy of about a block-->
+   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
 
    <application
       android:allowBackup="true"
