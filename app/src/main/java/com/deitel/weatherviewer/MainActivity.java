@@ -110,7 +110,7 @@ private EditText locationEditText;
                           Address lastAdress = addressList.get(0);
 
                          // locationEditText.setText(lastAdress.toString());
-                          String address = lastAdress.getLocality() + ", " + lastAdress.getPostalCode()
+                          String address = lastAdress.getLocality() + ", " + lastAdress.getAdminArea()
                           + ", " + lastAdress.getCountryName();
 
                           locationEditText.setText(address);
