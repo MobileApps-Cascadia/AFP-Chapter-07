@@ -3,16 +3,27 @@
 package com.deitel.weatherviewer;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,12 +39,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+   private final String TAG = MainActivity.class.getSimpleName();
    // List of Weather objects representing the forecast
    private List<Weather> weatherList = new ArrayList<>();
 
    // ArrayAdapter for binding Weather objects to a ListView
    private WeatherArrayAdapter weatherArrayAdapter;
    private ListView weatherListView; // displays weather info
+
+   private FusedLocationProviderClient fusedLocationClient;
+   private Location usersLastLocation;
+   private List<Address> userLocationList;
+   private Geocoder mGeocoder;
+   private Address userLastAddress;
+   private String userLocality;
+   private String userAdminArea;
+   private String userCountryCode;
+   private EditText locationEditText;
 
    // configure Toolbar, ListView and FAB
    @Override
@@ -44,10 +66,48 @@ public class MainActivity extends AppCompatActivity {
       Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       setSupportActionBar(toolbar);
 
+      fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+      mGeocoder = new Geocoder(MainActivity.this);
+      locationEditText = (EditText) findViewById(R.id.locationEditText);
+
       // create ArrayAdapter to bind weatherList to the weatherListView
       weatherListView = (ListView) findViewById(R.id.weatherListView);
       weatherArrayAdapter = new WeatherArrayAdapter(this, weatherList);
       weatherListView.setAdapter(weatherArrayAdapter);
+
+
+      //Something's wrong with the permissions
+       if ( ContextCompat.checkSelfPermission( MainActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
+
+           ActivityCompat.requestPermissions( MainActivity.this, new String[] {  android.Manifest.permission.ACCESS_COARSE_LOCATION  },
+                   2);
+       }
+       fusedLocationClient.getLastLocation()
+               .addOnSuccessListener(MainActivity.this, new OnSuccessListener<Location>() {
+                   @Override
+                   public void onSuccess(Location location) {
+                       // Got last known location. In some rare situations this can be null.
+                      locationEditText.setText("Boston, MA, US");
+                       if (location != null) {
+                           // Logic to handle location object
+                           usersLastLocation = location;
+                           try{
+                               userLocationList = mGeocoder.getFromLocation(usersLastLocation.getLatitude(), usersLastLocation.getLongitude(), 1);
+                               userLastAddress = userLocationList.get(0);
+                               userLocality = userLastAddress.getLocality();
+                               userAdminArea = userLastAddress.getAdminArea();
+                               userCountryCode = userLastAddress.getCountryCode();
+                               String address = userLocality + ", " + userAdminArea + ", " + userCountryCode;
+                               locationEditText.setText(address);
+
+                           }
+                           catch(IOException e){
+                               e.printStackTrace();
+                           }
+
+                       }
+                   }
+               });
 
       // configure FAB to hide keyboard and initiate web service request
       FloatingActionButton fab =
@@ -56,8 +116,6 @@ public class MainActivity extends AppCompatActivity {
          @Override
          public void onClick(View view) {
             // get text from locationEditText and create web service URL
-            EditText locationEditText =
-               (EditText) findViewById(R.id.locationEditText);
             URL url = createURL(locationEditText.getText().toString());
 
             // hide keyboard and initiate a GetWeatherTask to download
