@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
+
     compileSdkVersion 26
     buildToolsVersion '28.0.3'
 
@@ -8,6 +9,14 @@ android {
         applicationId "com.deitel.weatherviewer"
         minSdkVersion 22
         targetSdkVersion 26
+
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.deitel.weatherviewer"
+        minSdkVersion 23
+        targetSdkVersion 28
+
         versionCode 1
         versionName "1.0"
     }
@@ -24,6 +33,7 @@ android {
 }
 
 dependencies {
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     //noinspection GradleCompatable
@@ -32,5 +42,12 @@ dependencies {
     compile 'com.android.support:design:22.2.0'
     compile 'com.google.android.gms:play-services:12.0.1'
 
+
+
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+    implementation 'com.google.android.gms:play-services:12.0.1'
 
 }
