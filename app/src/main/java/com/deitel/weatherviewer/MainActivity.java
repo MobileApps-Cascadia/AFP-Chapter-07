@@ -14,6 +14,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
 
+
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.FusedLocationProviderApi;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
    // ArrayAdapter for binding Weather objects to a ListView
    private WeatherArrayAdapter weatherArrayAdapter;
    private ListView weatherListView; // displays weather info
+   private FusedLocationProviderApi mFusedLocationClient;
 
    // configure Toolbar, ListView and FAB
    @Override
@@ -43,6 +48,9 @@ public class MainActivity extends AppCompatActivity {
       setContentView(R.layout.activity_main);
       Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
       setSupportActionBar(toolbar);
+
+      mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
 
       // create ArrayAdapter to bind weatherList to the weatherListView
       weatherListView = (ListView) findViewById(R.id.weatherListView);
@@ -74,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
          }
       });
    }
+
+
 
    // programmatically dismiss keyboard when user touches FAB
    private void dismissKeyboard(View view) {
